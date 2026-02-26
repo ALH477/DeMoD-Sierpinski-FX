@@ -21,21 +21,10 @@
           python = pkgs.python311;
         in
         {
-          beater = python.pkgs.buildPythonApplication {
-            pname = "demod-sierpinski-beater";
-            version = "2.4";
-            src = ./.;
-            pyproject = true;
-            build-system = [ python.pkgs.setuptools ];
-            propagatedBuildInputs = with python.pkgs; [
-              rich
-              questionary
-              pretty-midi
-              soundfile
-              numpy
-            ];
-            doCheck = false;
-          };
+          beater = pkgs.writeShellScriptBin "demod-sierpinski-beater" ''
+            exec ${python.interpreter} -m pip install --quiet --break-system-packages rich questionary pretty-midi soundfile numpy
+            exec ${python.interpreter} -c "from demod_sierpinski_beater import main; main()"
+          '';
 
           fx-lv2 = pkgs.stdenv.mkDerivation {
             pname = "demod-sierpinski-fx";
@@ -66,21 +55,8 @@
         {
           default = pkgs.mkShell {
             buildInputs = [
-              (python.pkgs.buildPythonApplication {
-                pname = "demod-sierpinski-beater";
-                version = "2.4";
-                src = ./.;
-                pyproject = true;
-                build-system = [ python.pkgs.setuptools ];
-                propagatedBuildInputs = with python.pkgs; [
-                  rich
-                  questionary
-                  pretty-midi
-                  soundfile
-                  numpy
-                ];
-                doCheck = false;
-              })
+              python
+              pkgs.pip
               pkgs.faust
               pkgs.fluidsynth
               pkgs.lv2
@@ -89,6 +65,7 @@
               python.pkgs.ruff
             ];
             shellHook = ''
+              pip install --quiet --break-system-packages rich questionary pretty-midi soundfile numpy
               echo "DeMoD Sierpinski Argent Metal Edition v2.4 loaded"
               echo "   Run: demod-sierpinski-beater"
             '';
@@ -108,21 +85,11 @@
           environment.systemPackages = let
             pkgSet = nixpkgs.legacyPackages.x86_64-linux;
           in [
-            (pkgSet.python311.pkgs.buildPythonApplication {
-              pname = "demod-sierpinski-beater";
-              version = "2.4";
-              src = ./.;
-              pyproject = true;
-              build-system = [ pkgSet.python311.pkgs.setuptools ];
-              propagatedBuildInputs = with pkgSet.python311.pkgs; [
-                rich
-                questionary
-                pretty-midi
-                soundfile
-                numpy
-              ];
-              doCheck = false;
-            })
+            pkgSet.python311
+            (pkgSet.writeShellScriptBin "demod-sierpinski-beater" ''
+              exec ${pkgSet.python311.interpreter} -m pip install --quiet --break-system-packages rich questionary pretty-midi soundfile numpy
+              exec ${pkgSet.python311.interpreter} -c "from demod_sierpinski_beater import main; main()"
+            '')
           ];
           environment.variables.LV2_PATH = "/run/current-system/sw/lib/lv2";
         };
