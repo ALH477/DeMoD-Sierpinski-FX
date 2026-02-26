@@ -29,18 +29,33 @@
           fx-lv2 = pkgs.stdenv.mkDerivation {
             pname = "demod-sierpinski-fx";
             version = "2.4";
-            src = ./.;
-            nativeBuildInputs = [ pkgs.faust pkgs.lv2 ];
-            buildPhase = ''
+            src = ./demod_sierpinski_fx.lv2;
+            installPhase = ''
               mkdir -p $out/lib/lv2
-              faust2lv2 -a -t "DeMoD Sierpinski FX" demod_sierpinski_fx.dsp
-              mv demod_sierpinski_fx.lv2 $out/lib/lv2/
-
-              faust2jack demod_sierpinski_fx.dsp
-              mkdir -p $out/bin
-              mv demod_sierpinski_fx $out/bin/demod-sierpinski-fx-jack
+              cp -r . $out/lib/lv2/demod_sierpinski_fx.lv2
             '';
-            installPhase = "true";
+          };
+
+          bundle = pkgs.stdenv.mkDerivation {
+            pname = "demod-sierpinski-fx-bundle";
+            version = "2.4";
+            src = ./.;
+            installPhase = ''
+              mkdir -p $out/share/demod-sierpinski-fx
+              cp -r demod_sierpinski_fx.lv2 $out/share/demod-sierpinski-fx/
+              cp demod_sierpinski_fx.dsp $out/share/demod-sierpinski-fx/
+              cp demod_sierpinski_beater.py $out/share/demod-sierpinski-fx/
+              cp pyproject.toml $out/share/demod-sierpinski-fx/
+              cp README.md $out/share/demod-sierpinski-fx/
+
+              mkdir -p $out/bin
+              cat > $out/bin/demod-sierpinski-beater << 'EOF'
+              #!/bin/sh
+              exec python3 -m pip install --quiet --break-system-packages rich questionary pretty-midi soundfile numpy
+              exec python3 -c "from demod_sierpinski_beater import main; main()"
+              EOF
+              chmod +x $out/bin/demod-sierpinski-beater
+            '';
           };
         }
       );
@@ -90,6 +105,15 @@
               exec ${pkgSet.python311.interpreter} -m pip install --quiet --break-system-packages rich questionary pretty-midi soundfile numpy
               exec ${pkgSet.python311.interpreter} -c "from demod_sierpinski_beater import main; main()"
             '')
+            (pkgSet.stdenv.mkDerivation {
+              pname = "demod-sierpinski-fx";
+              version = "2.4";
+              src = ./demod_sierpinski_fx.lv2;
+              installPhase = ''
+                mkdir -p $out/lib/lv2
+                cp -r . $out/lib/lv2/demod_sierpinski_fx.lv2
+              '';
+            })
           ];
           environment.variables.LV2_PATH = "/run/current-system/sw/lib/lv2";
         };
