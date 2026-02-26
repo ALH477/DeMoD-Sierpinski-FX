@@ -39,6 +39,8 @@
                 propagatedBuildInputs = with pyPrev; [
                   numpy
                   mido   # pure-python MIDI I/O, already in nixpkgs
+                  six          # pretty_midi.py imports six at module load time
+                  setuptools   # instrument.py imports pkg_resources (part of setuptools)
                 ];
 
                 # Upstream tests require audio hardware / network fixtures.
